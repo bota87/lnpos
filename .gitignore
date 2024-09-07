@@ -4,3 +4,5 @@ build
 .cache
 hardware-installer/
 /.pio
+lnpos/Config*.h
+lnpos/*.ino.cpp

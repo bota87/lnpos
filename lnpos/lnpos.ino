@@ -1,3 +1,4 @@
+#include "Config.h"
 #include <WiFi.h>
 #include <FS.h>
 #include <SPIFFS.h>
@@ -11,6 +12,7 @@ fs::SPIFFSFS &FlashFS = SPIFFS;
 #include <WiFiClientSecure.h>
 #include "mbedtls/aes.h"
 #include "mbedtls/md5.h"
+#include "driver/rtc_io.h"
 
 // ArduinoJson, Keypad and uBitcoin should be installed using the Arduino Library Manager.
 // The latest versions should work, verified with ArduinoJson 7.2.1, Keypad 3.1.1 and uBitcoin 0.2.0
@@ -23,39 +25,6 @@ fs::SPIFFSFS &FlashFS = SPIFFS;
 #define PARAM_FILE "/elements.json"
 #define KEY_FILE "/thekey.txt"
 #define USB_POWER 1000 // battery percentage sentinel value to indicate USB power
-
-//////////SET TO TRUE TO WIPE MEMORY//////////////
-bool format = false;
-
-////////////////////////////////////////////////////////
-///////////OPTIONALLY SET HARDCODED DETAILS/////////////
-////////////////////////////////////////////////////////
-
-///////// OPTIONALLY SET HARDCODED SETTINGS ////////////
-bool hardcoded = false; /// Set to true to hardcode
-
-/// FOR OFFLINE POS
-String offlinePoS = "https://demo.lnbits.com/lnpos/api/v1/lnurl/WTmei,BzzoY5wbgpym3eMdb9ueXr,USD";
-
-/// FOR OFFLINE ATM
-String offlineATM = "https://demo.lnbits.com/fossa/api/v1/lnurl/W5xu4,XGg4BJ3xCh36JdMKm2kgDw,USD";
-
-/// FOR GENERATING ONCHAIN ADDRESSES
-String masterKey = "xpub6CJFgwcim8tPBJo2A6dS13kZxqbgtWKD3LKj1tyurWADbXbPyWo11exyotTSUY3cvhQy5Mfj8FSURgpXhc4L2UvQyaTMC36S49JnNJMmcWU";
-String mempool = "https://mempool.space";
-
-/// FOR ONLINE POS
-String lnbitsServer = "https://demo.lnbits.com";
-String invoice = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-String lnCurrency = "GBP";
-String ssid = "AlansBits";
-String password = "ithurtswhenip";
-
-/// ADDITIONAL SETTINGS
-String securityPin = "878787";  // FOR SETTINGS AND ATM
-String fiatDecimalPlaces = "2"; // FOR OUR JAPANESE FREINDS
-
-//////////////////////////////////////////////////
 
 // variables
 String inputs;
@@ -1758,6 +1727,7 @@ void maybeSleepDevice()
         if (isLilyGoKeyboard())
         {
           esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, 1); // 1 = High, 0 = Low
+          rtc_gpio_pulldown_en(GPIO_NUM_32);
         }
         else
         {
