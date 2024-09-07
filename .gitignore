@@ -2,3 +2,5 @@ tmp
 .vscode
 build
 /.pio
+lnpos/Config*.h
+lnpos/*.ino.cpp
