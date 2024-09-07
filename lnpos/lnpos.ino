@@ -1,3 +1,4 @@
+#include "Config.h"
 #include <WiFi.h>
 #include <WebServer.h>
 #include <FS.h>
@@ -15,36 +16,11 @@ fs::SPIFFSFS &FlashFS = SPIFFS;
 #include "qrcoded.h"
 #include "Bitcoin.h"
 #include <WiFiClientSecure.h>
+#include "driver/rtc_io.h"
 
 #define PARAM_FILE "/elements.json"
 #define KEY_FILE "/thekey.txt"
 #define USB_POWER 1000 // battery percentage sentinel value to indicate USB power
-
-//////////SET TO TRUE TO WIPE MEMORY//////////////
-
-bool format = false;
-
-////////////////////////////////////////////////////////
-////////////LNPOS WILL LOOK FOR DETAILS SET/////////////
-////////OVER THE WEBINSTALLER CONFIG, HOWEVER///////////
-///////////OPTIONALLY SET HARDCODED DETAILS/////////////
-////////////////////////////////////////////////////////
-
-bool hardcoded = false; /// Set to true to hardcode
-
-String lnurlPoS = "https://legend.lnbits.com/lnurldevice/api/v1/lnurl/WTmei,BzzoY5wbgpym3eMdb9ueXr,USD";
-String lnurlATM = "https://legend.lnbits.com/lnurldevice/api/v1/lnurl/W5xu4,XGg4BJ3xCh36JdMKm2kgDw,USD";
-String masterKey = "xpub6CJFgwcim8tPBJo2A6dS13kZxqbgtWKD3LKj1tyurWADbXbPyWo11exyotTSUY3cvhQy5Mfj8FSURgpXhc4L2UvQyaTMC36S49JnNJMmcWU";
-String lnbitsServer = "https://legend.lnbits.com";
-String invoice = "37d45d3e1f0d4572a905bad544588d7d";
-String lncurrency = "GBP";
-String lnurlATMMS = "https://mempool.space";
-String lnurlATMPin = "878787";
-String decimalplaces = "2";
-String ssid = "AlansBits";
-String password = "ithurtswhenip";
-
-//////////////////////////////////////////////////
 
 // variables
 String inputs;
@@ -1730,6 +1706,7 @@ void maybeSleepDevice()
         if (isLilyGoKeyboard())
         {
           esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, 1); // 1 = High, 0 = Low
+          rtc_gpio_pulldown_en(GPIO_NUM_32);
         }
         else
         {
