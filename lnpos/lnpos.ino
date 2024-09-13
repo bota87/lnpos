@@ -17,6 +17,7 @@ fs::SPIFFSFS &FlashFS = SPIFFS;
 #include "Bitcoin.h"
 #include <WiFiClientSecure.h>
 #include "driver/rtc_io.h"
+#include "esp_adc_cal.h"
 
 #define PARAM_FILE "/elements.json"
 #define KEY_FILE "/thekey.txt"
@@ -60,6 +61,7 @@ int sumFlag = 0;
 int converted = 0;
 int sleepTimer = 30;          // Time in seconds before the device goes to sleep
 int qrScreenBrightness = 180; // 0 = min, 255 = max
+int vref = 1100;
 long timeOfLastInteraction = millis();
 bool isSleepEnabled = true;
 bool isPretendSleeping = false;
@@ -179,6 +181,23 @@ void setup()
       error("Error", "WiFi failed", "");
       delay(3000);
     }
+  }
+  
+  // per avere una lettura più accurata della tensione della batteria
+  esp_adc_cal_characteristics_t adc_chars;
+  esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars); // Check type of calibration value used to characterize ADC
+  if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
+  {
+    Serial.printf("eFuse Vref:%u mV", adc_chars.vref);
+    vref = adc_chars.vref;
+  }
+  else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP)
+  {
+    Serial.printf("Two Point --> coeff_a:%umV coeff_b:%umV\n", adc_chars.coeff_a, adc_chars.coeff_b);
+  }
+  else
+  {
+    Serial.println("Default Vref: 1100mV");
   }
 
   delay(2000);
@@ -1659,7 +1678,7 @@ int xor_encrypt(uint8_t *output, size_t outlen, uint8_t *key, size_t keylen, uin
 unsigned int getBatteryPercentage()
 {
   const float batteryMaxVoltage = 4.2;
-  const float batteryMinVoltage = 3.73;
+  const float batteryMinVoltage = 3.3;
 
   const float batteryAllowedRange = batteryMaxVoltage - batteryMinVoltage;
   const float batteryCurVAboveMin = getInputVoltage() - batteryMinVoltage;
@@ -1676,8 +1695,9 @@ unsigned int getBatteryPercentage()
 float getInputVoltage()
 {
   delay(100);
+  // https://github.com/Xinyuan-LilyGO/TTGO-T-Display/blob/master/TFT_eSPI/examples/FactoryTest/FactoryTest.ino
   const uint16_t v1 = analogRead(34);
-  return ((float)v1 / 4095.0f) * 2.0f * 3.3f * (1100.0f / 1000.0f);
+  return ((float)v1 / 4095.0f) * 2.0f * 3.3f * (vref / 1000.0f);
 }
 
 /**
@@ -1694,29 +1714,29 @@ void maybeSleepDevice()
     {
       sleepAnimation();
       // The device wont charge if it is sleeping, so when charging, do a pretend sleep
-      if (isPoweredExternally())
+      // if (isPoweredExternally())
+      // {
+      //   isLilyGoKeyboard();
+      //   Serial.println("Pretend sleep now");
+      //   isPretendSleeping = true;
+      //   tft.fillScreen(TFT_BLACK);
+      // }
+      // else
+      // {
+      if (isLilyGoKeyboard())
       {
-        isLilyGoKeyboard();
-        Serial.println("Pretend sleep now");
-        isPretendSleeping = true;
-        tft.fillScreen(TFT_BLACK);
+        esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, 1); // 1 = High, 0 = Low
+        rtc_gpio_pulldown_en(GPIO_NUM_32);
       }
       else
       {
-        if (isLilyGoKeyboard())
-        {
-          esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, 1); // 1 = High, 0 = Low
-          rtc_gpio_pulldown_en(GPIO_NUM_32);
-        }
-        else
-        {
-          // Configure Touchpad as wakeup source
-          touchAttachInterrupt(T3, callback, 40);
-          esp_sleep_enable_touchpad_wakeup();
-        }
-        Serial.println("Going to sleep now");
-        esp_deep_sleep_start();
+        // Configure Touchpad as wakeup source
+        touchAttachInterrupt(T3, callback, 40);
+        esp_sleep_enable_touchpad_wakeup();
       }
+      Serial.println("Going to sleep now");
+      esp_deep_sleep_start();
+      // }
     }
   }
 }
