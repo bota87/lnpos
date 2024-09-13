@@ -1,3 +1,4 @@
+#include <Arduino.h>
 //////////SET TO TRUE TO WIPE MEMORY//////////////
 
 bool format = false;
