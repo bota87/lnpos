@@ -8,7 +8,7 @@ fs::SPIFFSFS &FlashFS = SPIFFS;
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <stdio.h>
-#include "qrcoded.h"
+#include "qrcode.h"
 #include <WiFiClientSecure.h>
 #include "mbedtls/aes.h"
 #include "mbedtls/md5.h"
